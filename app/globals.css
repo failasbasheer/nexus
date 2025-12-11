@@ -1,0 +1,108 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 255, 255, 255;
+  --background-start-rgb: 11, 10, 16;
+  --background-end-rgb: 11, 10, 16;
+}
+
+body {
+  background-color: #0B0A10;
+  color: #FFFFFF;
+  font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  /* Technical character set */
+  letter-spacing: -0.015em;
+  /* Balanced technical feel */
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0B0A10;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #3E3B50;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #6E56CF;
+}
+
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.transform-style-3d {
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+}
+
+/* Utility for 3D cubes in CSS */
+.cube {
+  transform-style: preserve-3d;
+}
+
+.cube-face {
+  position: absolute;
+  border: 1px solid rgba(110, 86, 207, 0.3);
+}
+
+/* Vercel/Stripe-style Button Utilities */
+.btn-primary {
+  @apply inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-200 ease-out;
+  background: white;
+  color: black;
+  box-shadow: 0 0 0 1px transparent, 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn-primary:hover {
+  @apply bg-gray-200 transform -translate-y-[1px];
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+}
+
+.btn-secondary {
+  @apply inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-200 ease-out;
+  background: rgba(255, 255, 255, 0.05);
+  /* Very subtle background */
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Premium Typography refinements */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  @apply tracking-tight;
+  /* Default tight tracking for all headings */
+}
+
+h1 {
+  @apply tracking-tighter;
+}
+
+body {
+  /* Ensure only one definition */
+}
