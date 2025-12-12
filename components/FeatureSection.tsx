@@ -13,7 +13,7 @@ interface FeatureProps {
   icon: LucideIcon;
   features: string[];
   reversed?: boolean;
-  artVariant: 'mobile' | 'dashboard' | 'tech' | 'pricing';
+  artVariant: 'mobile' | 'dashboard' | 'tech' | 'pricing' | 'billing';
 }
 
 const FeatureSection: React.FC<FeatureProps> = ({

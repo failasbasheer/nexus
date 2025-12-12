@@ -99,49 +99,51 @@ const AbstractArt: React.FC<AbstractArtProps> = ({ variant, className = '', styl
           gsap.set(uiImageRef.current, { opacity: 0, filter: "blur(12px)" });
         }
 
-        const tl = gsap.timeline({
-          scrollTrigger: {
-            trigger: containerRef.current,
-            start: "top 60%", // Play when element is well into view
-            end: "bottom top",
-            toggleActions: "play none none reverse"
-          }
-        });
-
-        // Step 1: Ready -> Verifying (Start)
-        tl.to(readyBadge, { opacity: 0, scale: 0.9, duration: 0.4 })
-          .set(readyBadge, { display: 'none' })
-          .set(verifyingBadge, { display: 'flex' })
-          .to(verifyingBadge, { opacity: 1, scale: 1, duration: 0.4 })
-
-          // Step 2: "Capturing" - Fade in Blurred Image
-          .to(uiImageRef.current, {
-            opacity: 1,
-            duration: 0.8,
-            ease: "power2.inOut"
-          }, "<+=0.2") // Overlap slightly with badge change
-
-          // Step 3: "Hold" verifying state (Processing...)
-          .to(verifyingBadge, {
-            y: -5,
-            repeat: 3,
-            yoyo: true,
-            duration: 0.4,
-            ease: "sine.inOut"
-          })
-
-          // Step 4: Verifying -> Verified & Clear Image
-          .to(verifyingBadge, { opacity: 0, scale: 0.9, duration: 0.4 })
-          .set(verifyingBadge, { display: 'none' })
-          .set(verifiedBadge, { display: 'flex' })
-          .to([verifiedBadge, uiImageRef.current], {
-            opacity: 1, // Ensure both are visible
-            scale: 1, // Verified badge scale
-            y: 0, // Verified badge y
-            filter: "blur(0px)", // CLEAR IMAGE
-            duration: 0.8,
-            ease: "power2.out" // Smooth clear
+        if (readyBadge && verifyingBadge && verifiedBadge && uiImageRef.current) {
+          const tl = gsap.timeline({
+            scrollTrigger: {
+              trigger: containerRef.current,
+              start: "top 60%", // Play when element is well into view
+              end: "bottom top",
+              toggleActions: "play none none reverse"
+            }
           });
+
+          // Step 1: Ready -> Verifying (Start)
+          tl.to(readyBadge, { opacity: 0, scale: 0.9, duration: 0.4 })
+            .set(readyBadge, { display: 'none' })
+            .set(verifyingBadge, { display: 'flex' })
+            .to(verifyingBadge, { opacity: 1, scale: 1, duration: 0.4 })
+
+            // Step 2: "Capturing" - Fade in Blurred Image
+            .to(uiImageRef.current, {
+              opacity: 1,
+              duration: 0.8,
+              ease: "power2.inOut"
+            }, "<+=0.2") // Overlap slightly with badge change
+
+            // Step 3: "Hold" verifying state (Processing...)
+            .to(verifyingBadge, {
+              y: -5,
+              repeat: 3,
+              yoyo: true,
+              duration: 0.4,
+              ease: "sine.inOut"
+            })
+
+            // Step 4: Verifying -> Verified & Clear Image
+            .to(verifyingBadge, { opacity: 0, scale: 0.9, duration: 0.4 })
+            .set(verifyingBadge, { display: 'none' })
+            .set(verifiedBadge, { display: 'flex' })
+            .to([verifiedBadge, uiImageRef.current], {
+              opacity: 1, // Ensure both are visible
+              scale: 1, // Verified badge scale
+              y: 0, // Verified badge y
+              filter: "blur(0px)", // CLEAR IMAGE
+              duration: 0.8,
+              ease: "power2.out" // Smooth clear
+            });
+        }
       }
 
       // === DASHBOARD VARIANT ANIMATIONS ===
