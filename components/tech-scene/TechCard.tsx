@@ -167,7 +167,7 @@ const TechCard: React.FC = () => {
                         </span>
                     </div>
                     <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
-                        <div className={`h-full transition-all duration-300 ease-linear rounded-full
+                        <div className={`h-full rounded-full
                 ${state === 'offline' ? 'bg-rose-500' : state === 'syncing' ? 'bg-amber-500' : 'bg-emerald-500'}
             `} style={{ width: `${simulatedProgress}%` }}></div>
                     </div>
