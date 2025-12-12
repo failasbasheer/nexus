@@ -1,5 +1,5 @@
 import React, { useLayoutEffect, useRef } from 'react';
-import { MapPin, Camera, Navigation, Check, Clock, MoreHorizontal } from 'lucide-react';
+import { MapPin, Camera, Navigation, Check, Clock, MoreHorizontal, TrendingUp, Calendar, ArrowRight } from 'lucide-react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
@@ -32,7 +32,7 @@ const PhoneMockup: React.FC<{ className?: string }> = ({ className = "" }) => {
                     scrollTrigger: {
                         trigger: section,
                         start: "center center", // Lock when hero is centered
-                        end: "+=1000", // Scroll distance to unlock
+                        end: "+=3000", // Increased scroll distance for multi-step animation
                         scrub: 1,
                         pin: true,
                         anticipatePin: 1,
@@ -42,21 +42,75 @@ const PhoneMockup: React.FC<{ className?: string }> = ({ className = "" }) => {
                 // Animate both counter and bar width synchronously with scroll
                 const counter = { val: 0 };
 
+                // === STEP 1: Route Start (0-30%) ===
                 tl.to(counter, {
-                    val: 100,
-                    ease: "none", // Linear scrub
-                    duration: 1,
+                    val: 45,
+                    ease: "none",
+                    duration: 1.5,
                     onUpdate: () => {
-                        if (progressTextRef.current) {
-                            progressTextRef.current.innerText = Math.round(counter.val) + "%";
-                        }
+                        if (progressTextRef.current) progressTextRef.current.innerText = Math.round(counter.val) + "%";
                     }
                 })
-                    .to(progressBarRef.current, {
-                        width: "100%",
+                    .to(progressBarRef.current, { width: "45%", ease: "none", duration: 1.5 }, "<")
+
+                    // === STEP 2: First Stop Complete (30-40%) ===
+                    // Item 1 swipes left
+                    .to(".item-1", { x: -50, opacity: 0, duration: 0.5, ease: "power2.in" })
+                    .set(".item-1", { display: "none" }) // Hide layout space
+
+                    // === STEP 3: Route Continue (40-60%) ===
+                    .to(counter, {
+                        val: 80,
                         ease: "none",
-                        duration: 1
-                    }, "<"); // Run at start of timeline
+                        duration: 1,
+                        onUpdate: () => {
+                            if (progressTextRef.current) progressTextRef.current.innerText = Math.round(counter.val) + "%";
+                        }
+                    })
+                    .to(progressBarRef.current, { width: "80%", ease: "none", duration: 1 }, "<")
+
+                    // === STEP 4: Second Stop Complete (60-70%) ===
+                    // Item 2 swipes left
+                    .to(".item-2", { x: -50, opacity: 0, duration: 0.5, ease: "power2.in" })
+                    .set(".item-2", { display: "none" })
+
+                    // === STEP 5: Route Finish (70-90%) ===
+                    .to(counter, {
+                        val: 100,
+                        ease: "none",
+                        duration: 1,
+                        onUpdate: () => {
+                            if (progressTextRef.current) progressTextRef.current.innerText = Math.round(counter.val) + "%";
+                        }
+                    })
+                    .to(progressBarRef.current, { width: "100%", ease: "none", duration: 1 }, "<")
+
+                    // Change UI State to "Completed"
+                    .to(".route-status-label", {
+                        opacity: 0, duration: 0.2, onComplete: () => {
+                            const el = document.querySelector(".route-status-label") as HTMLElement;
+                            if (el) el.innerText = "Route Completed";
+                        }
+                    })
+                    .to(".route-status-label", { opacity: 1, duration: 0.2, color: "#10B981" })
+                    .to(progressBarRef.current, { backgroundColor: "#10B981" }, "<")
+
+                    // === STEP 6: Show Summary Card (90-100%) ===
+                    .to(".up-next-label", { opacity: 0, duration: 0.2 }, "<") // Hide "Up Next"
+                    .set(".completed-view", { display: "flex" })
+                    .fromTo(".completed-view",
+                        { y: 50, opacity: 0 },
+                        { y: 0, opacity: 1, duration: 0.8, ease: "back.out(1.2)" }
+                    )
+                    // Stagger stats entrance
+                    .fromTo(".stat-item",
+                        { y: 10, opacity: 0 },
+                        { y: 0, opacity: 1, stagger: 0.1, duration: 0.4 },
+                        "-=0.4"
+                    )
+
+                    // === Hold at end ===
+                    .to({}, { duration: 0.5 });
             }
         }, containerRef);
 
@@ -110,7 +164,7 @@ const PhoneMockup: React.FC<{ className?: string }> = ({ className = "" }) => {
                                     <div className="p-1.5 rounded-md bg-white/10">
                                         <MapPin size={14} className="text-white" strokeWidth={2} />
                                     </div>
-                                    <span className="text-white/80 text-xs font-medium">Route Progress</span>
+                                    <span className="text-white/80 text-xs font-medium route-status-label">Route Progress</span>
                                 </div>
                                 <span ref={progressTextRef} className="text-white font-mono text-xs bg-white/10 px-2 py-1 rounded-full">0%</span>
                             </div>
@@ -144,41 +198,71 @@ const PhoneMockup: React.FC<{ className?: string }> = ({ className = "" }) => {
                     {/* Feed */}
                     <div className="flex-1">
                         <div className="flex justify-between items-end mb-4">
-                            <h4 className="text-white text-sm font-semibold tracking-tight">Up Next</h4>
+                            <h4 className="text-white text-sm font-semibold tracking-tight up-next-label">Up Next</h4>
                             <button className="text-[10px] text-accent-primary font-medium hover:text-white transition-colors">View All</button>
                         </div>
 
-                        <div className="space-y-3">
-
-                            {/* Active Item */}
-                            <div className="bg-white/[0.03] border border-accent-primary/30 rounded-xl p-4 relative group hover:bg-white/[0.05] transition-colors">
-                                <div className="flex justify-between items-start mb-1">
-                                    <h5 className="text-white font-medium text-sm">Starbucks HQ</h5>
-                                    <div className="w-1.5 h-1.5 rounded-full bg-accent-primary shadow-[0_0_8px_rgba(99,91,255,0.8)]"></div>
-                                </div>
-                                <p className="text-secondary text-[11px] flex items-center gap-1.5">
-                                    <Clock size={10} strokeWidth={1.5} /> 2:30 PM • 0.8 mi
-                                </p>
-                            </div>
-
-                            {/* Pending Item */}
-                            <div className="bg-transparent border border-white/5 rounded-xl p-4 flex items-center justify-between opacity-60 hover:opacity-100 transition-opacity cursor-pointer">
-                                <div>
-                                    <h5 className="text-white font-medium text-sm mb-1">Tech Data Inc</h5>
-                                    <p className="text-secondary text-[11px]">Follow Up</p>
-                                </div>
-                                <MoreHorizontal size={14} className="text-white/20" />
-                            </div>
-                            {/* Pending Item */}
-                            <div className="bg-transparent border border-white/5 rounded-xl p-4 flex items-center justify-between opacity-40">
-                                <div className="flex items-center gap-3">
-                                    <div className="p-1 rounded bg-white/10">
-                                        <Check size={10} />
+                        <div className="relative h-[200px]"> {/* Fixed height container for swapping views */}
+                            {/* View 1: Pending List */}
+                            <div className="space-y-3 absolute inset-0 w-full pointer-events-none">
+                                {/* Active Item - Item 1 */}
+                                <div className="item-1 bg-white/[0.03] border border-accent-primary/30 rounded-xl p-4 relative group transition-colors">
+                                    <div className="flex justify-between items-start mb-1">
+                                        <h5 className="text-white font-medium text-sm">Starbucks HQ</h5>
+                                        <div className="w-1.5 h-1.5 rounded-full bg-accent-primary shadow-[0_0_8px_rgba(99,91,255,0.8)]"></div>
                                     </div>
-                                    <h5 className="text-white font-medium text-sm line-through decoration-white/30">Whole Foods</h5>
+                                    <p className="text-secondary text-[11px] flex items-center gap-1.5">
+                                        <Clock size={10} strokeWidth={1.5} /> 2:30 PM • 0.8 mi
+                                    </p>
+                                </div>
+
+                                {/* Pending Item - Item 2 */}
+                                <div className="item-2 bg-transparent border border-white/5 rounded-xl p-4 flex items-center justify-between opacity-60">
+                                    <div>
+                                        <h5 className="text-white font-medium text-sm mb-1">Tech Data Inc</h5>
+                                        <p className="text-secondary text-[11px]">Follow Up</p>
+                                    </div>
+                                    <MoreHorizontal size={14} className="text-white/20" />
                                 </div>
                             </div>
 
+                            {/* View 2: Premium Completed State (Hidden initially) */}
+                            <div className="completed-view hidden absolute inset-0 w-full flex-col justify-end pb-2 opacity-0">
+                                <div className="bg-[#1A1A1A]/80 backdrop-blur-md border border-white/10 rounded-2xl p-5 shadow-2xl ring-1 ring-white/5">
+                                    <div className="flex items-center gap-4 mb-6">
+                                        <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shadow-[0_0_20px_rgba(16,185,129,0.2)]">
+                                            <Check size={24} className="text-emerald-500" strokeWidth={3} />
+                                        </div>
+                                        <div>
+                                            <h5 className="text-white font-bold text-lg leading-tight">All Done!</h5>
+                                            <p className="text-secondary text-xs">Great job today.</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Stats Grid */}
+                                    <div className="grid grid-cols-3 gap-2 mb-4">
+                                        <div className="stat-item bg-white/5 rounded-lg p-2 text-center border border-white/5">
+                                            <div className="flex justify-center mb-1 text-accent-primary"><MapPin size={12} /></div>
+                                            <p className="text-white font-bold text-sm">15</p>
+                                            <p className="text-[9px] text-white/40 uppercase">Visits</p>
+                                        </div>
+                                        <div className="stat-item bg-white/5 rounded-lg p-2 text-center border border-white/5">
+                                            <div className="flex justify-center mb-1 text-accent-secondary"><TrendingUp size={12} /></div>
+                                            <p className="text-white font-bold text-sm">98%</p>
+                                            <p className="text-[9px] text-white/40 uppercase">On Time</p>
+                                        </div>
+                                        <div className="stat-item bg-white/5 rounded-lg p-2 text-center border border-white/5">
+                                            <div className="flex justify-center mb-1 text-emerald-400"><Calendar size={12} /></div>
+                                            <p className="text-white font-bold text-sm">6h</p>
+                                            <p className="text-[9px] text-white/40 uppercase">Duration</p>
+                                        </div>
+                                    </div>
+
+                                    <button className="w-full py-2.5 bg-white text-black font-semibold text-xs rounded-xl flex items-center justify-center gap-2 hover:bg-gray-200 transition-colors">
+                                        Finish Day <ArrowRight size={12} />
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
