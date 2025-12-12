@@ -16,9 +16,10 @@ interface AbstractArtProps {
   variant: ArtVariant;
   className?: string;
   style?: React.CSSProperties;
+  onTechStateChange?: (state: 'offline' | 'syncing' | 'online') => void;
 }
 
-const AbstractArt: React.FC<AbstractArtProps> = ({ variant, className = '', style }) => {
+const AbstractArt: React.FC<AbstractArtProps> = ({ variant, className = '', style, onTechStateChange }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const phoneRef = useRef<HTMLDivElement>(null);
   const [currentTime, setCurrentTime] = React.useState("9:41");
@@ -441,7 +442,7 @@ const AbstractArt: React.FC<AbstractArtProps> = ({ variant, className = '', styl
       case 'tech': // Feature: Offline PWA
         return (
           <div className={`relative w-full h-full rounded-2xl overflow-hidden ${className}`}>
-            <TechCard />
+            <TechCard onStateChange={onTechStateChange} />
           </div>
         );
 

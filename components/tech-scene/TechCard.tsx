@@ -1,16 +1,27 @@
 'use client';
 
-import React, { useRef, useLayoutEffect, useState } from 'react';
+import React, { useRef, useLayoutEffect, useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Wifi, Database, Lock, CheckCircle2, Zap, Cloud } from 'lucide-react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
 
-const TechCard: React.FC = () => {
+interface TechCardProps {
+    onStateChange?: (state: 'offline' | 'syncing' | 'online') => void;
+}
+
+const TechCard: React.FC<TechCardProps> = ({ onStateChange }) => {
     const [state, setState] = useState<'offline' | 'syncing' | 'online'>('offline');
     const [simulatedProgress, setSimulatedProgress] = useState(0);
     const containerRef = useRef<HTMLDivElement>(null);
+    const viewportProgressRef = useRef<HTMLDivElement>(null);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     useLayoutEffect(() => {
         const ctx = gsap.context(() => {
@@ -25,6 +36,20 @@ const TechCard: React.FC = () => {
                     scrub: 0.5, // Smoother scrubbing
                     pin: section,
                     anticipatePin: 1,
+                    onUpdate: (self) => {
+                        // Update fixed viewport progress bar
+                        if (viewportProgressRef.current) {
+                            // Use self.progress (0-1) for the bar width
+                            gsap.set(viewportProgressRef.current, { scaleX: self.progress });
+
+                            // Auto-hide logic
+                            if (self.progress > 0.99) {
+                                gsap.to(viewportProgressRef.current, { opacity: 0, duration: 0.3, overwrite: true });
+                            } else {
+                                gsap.to(viewportProgressRef.current, { opacity: 1, duration: 0.3, overwrite: true });
+                            }
+                        }
+                    }
                 }
             });
 
@@ -36,15 +61,20 @@ const TechCard: React.FC = () => {
                 ease: "none",
                 duration: 10,
                 onUpdate: () => {
+                    // Update proxy for React state
                     const p = proxy.t;
+
                     setSimulatedProgress(p);
 
                     if (p < 15) { // Short offline accumulation
                         setState('offline');
+                        onStateChange?.('offline');
                     } else if (p < 90) { // Long syncing phase
                         setState('syncing');
+                        onStateChange?.('syncing');
                     } else {
                         setState('online'); // Success at the very end
+                        onStateChange?.('online');
                     }
                 }
             });
@@ -171,6 +201,17 @@ const TechCard: React.FC = () => {
                 ${state === 'offline' ? 'bg-rose-500' : state === 'syncing' ? 'bg-amber-500' : 'bg-emerald-500'}
             `} style={{ width: `${simulatedProgress}%` }}></div>
                     </div>
+
+                    {/* Viewport Sticky Progress Bar - Portaled */}
+                    {mounted && createPortal(
+                        <div
+                            ref={viewportProgressRef}
+                            className={`fixed top-0 left-0 w-full h-1 z-[9999] origin-left scale-x-0 pointer-events-none transition-colors duration-500
+                                ${state === 'offline' ? 'bg-rose-500' : state === 'syncing' ? 'bg-amber-500' : 'bg-emerald-500'}
+                            `}
+                        />,
+                        document.body
+                    )}
                 </div>
 
                 {/* Security Indicator */}

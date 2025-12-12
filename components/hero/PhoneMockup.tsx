@@ -1,4 +1,5 @@
-import React, { useLayoutEffect, useRef } from 'react';
+import React, { useLayoutEffect, useRef, useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { MapPin, Camera, Navigation, Check, Clock, MoreHorizontal, TrendingUp, Calendar, ArrowRight } from 'lucide-react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -8,10 +9,15 @@ gsap.registerPlugin(ScrollTrigger);
 const PhoneMockup: React.FC<{ className?: string }> = ({ className = "" }) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const progressTextRef = useRef<HTMLSpanElement>(null);
+    const viewportProgressRef = useRef<HTMLDivElement>(null);
     const progressBarRef = useRef<HTMLDivElement>(null);
-    const [currentTime, setCurrentTime] = React.useState("9:41");
+    const visitedRef = useRef<HTMLSpanElement>(null);
+    const remainingRef = useRef<HTMLSpanElement>(null);
+    const [currentTime, setCurrentTime] = useState("9:41");
+    const [mounted, setMounted] = useState(false);
 
-    React.useEffect(() => {
+    useEffect(() => {
+        setMounted(true);
         const updateTime = () => {
             const now = new Date();
             const hours = now.getHours() % 12 || 12;
@@ -36,6 +42,18 @@ const PhoneMockup: React.FC<{ className?: string }> = ({ className = "" }) => {
                         scrub: 1,
                         pin: true,
                         anticipatePin: 1,
+                        onUpdate: (self) => {
+                            if (viewportProgressRef.current) {
+                                gsap.set(viewportProgressRef.current, { scaleX: self.progress });
+
+                                // Auto-hide logic upon completion
+                                if (self.progress > 0.99) {
+                                    gsap.to(viewportProgressRef.current, { opacity: 0, duration: 0.3, overwrite: true });
+                                } else {
+                                    gsap.to(viewportProgressRef.current, { opacity: 1, duration: 0.3, overwrite: true });
+                                }
+                            }
+                        }
                     }
                 });
 
@@ -57,6 +75,10 @@ const PhoneMockup: React.FC<{ className?: string }> = ({ className = "" }) => {
                     // Item 1 swipes left
                     .to(".item-1", { x: -50, opacity: 0, duration: 0.5, ease: "power2.in" })
                     .set(".item-1", { display: "none" }) // Hide layout space
+                    .call(() => {
+                        if (visitedRef.current) visitedRef.current.innerText = "13 Visited";
+                        if (remainingRef.current) remainingRef.current.innerText = "1 Remaining";
+                    })
 
                     // === STEP 3: Route Continue (40-60%) ===
                     .to(counter, {
@@ -73,6 +95,10 @@ const PhoneMockup: React.FC<{ className?: string }> = ({ className = "" }) => {
                     // Item 2 swipes left
                     .to(".item-2", { x: -50, opacity: 0, duration: 0.5, ease: "power2.in" })
                     .set(".item-2", { display: "none" })
+                    .call(() => {
+                        if (visitedRef.current) visitedRef.current.innerText = "14 Visited";
+                        if (remainingRef.current) remainingRef.current.innerText = "0 Remaining";
+                    })
 
                     // === STEP 5: Route Finish (70-90%) ===
                     .to(counter, {
@@ -170,11 +196,16 @@ const PhoneMockup: React.FC<{ className?: string }> = ({ className = "" }) => {
                             </div>
 
                             <div className="h-1.5 w-full bg-black/20 rounded-full overflow-hidden mb-2">
+                                {/* Viewport Scroll Progress Bar - Portaled to avoid Transform context */}
+                                {mounted && createPortal(
+                                    <div ref={viewportProgressRef} className="fixed top-0 left-0 w-full h-1 bg-gradient-to-r from-accent-primary to-accent-secondary z-[9999] origin-left scale-x-0 pointer-events-none" />,
+                                    document.body
+                                )}
                                 <div ref={progressBarRef} className="h-full w-0 bg-gradient-to-r from-accent-primary to-accent-secondary rounded-full"></div>
                             </div>
                             <div className="flex justify-between text-[10px] text-secondary">
-                                <span>12 Visited</span>
-                                <span>3 Remaining</span>
+                                <span ref={visitedRef}>12 Visited</span>
+                                <span ref={remainingRef}>2 Remaining</span>
                             </div>
                         </div>
                     </div>

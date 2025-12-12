@@ -11,7 +11,8 @@ interface FeatureProps {
   title: string;
   description: string;
   icon: LucideIcon;
-  features: string[];
+  features: string[]; // Legacy simple list
+  detailedFeatures?: { title: string; description: string; icon: LucideIcon; iconColor?: string; iconBgColor?: string }[]; // New rich grid
   reversed?: boolean;
   artVariant: 'mobile' | 'dashboard' | 'tech' | 'pricing' | 'billing';
 }
@@ -21,6 +22,7 @@ const FeatureSection: React.FC<FeatureProps> = ({
   description,
   icon: Icon,
   features,
+  detailedFeatures,
   reversed = false,
   artVariant
 }) => {
@@ -33,6 +35,8 @@ const FeatureSection: React.FC<FeatureProps> = ({
 
   const isMobileVariant = artVariant === 'mobile';
 
+  const [techState, setTechState] = useState<'offline' | 'syncing' | 'online'>('offline');
+
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
       // 1. Icon Entrance
@@ -44,17 +48,25 @@ const FeatureSection: React.FC<FeatureProps> = ({
       // 3. Description Fade Up
       animateFadeUp(descRef.current, { delay: 0.4, duration: 1, y: 30, start: "top 80%", trigger: containerRef.current });
 
-      // 4. Staggered Bullet Reveal
+      // 4. Staggered Bullet/Card Reveal
       if (listRef.current) {
         gsap.fromTo(listRef.current.children,
-          { opacity: 0, x: -20, filter: "blur(5px)" },
+          {
+            opacity: 0,
+            y: 30,
+            scale: 0.9,
+            filter: "blur(10px)",
+            rotationX: 10
+          },
           {
             opacity: 1,
-            x: 0,
+            y: 0,
+            scale: 1,
             filter: "blur(0px)",
+            rotationX: 0,
             duration: 0.8,
-            stagger: 0.1,
-            ease: "power2.out",
+            stagger: 0.08,
+            ease: "expo.out", // Snappy and premium
             scrollTrigger: {
               trigger: listRef.current,
               start: "top 85%",
@@ -88,10 +100,28 @@ const FeatureSection: React.FC<FeatureProps> = ({
     return () => ctx.revert();
   }, [reversed]);
 
+  // Dynamic Color Logic for Offline PWA Section
+  const getDynamicColorClasses = (defaultColor?: string, defaultBg?: string) => {
+    if (artVariant !== 'tech') {
+      // Default styling for non-tech sections
+      const baseBg = isMobileVariant ? 'bg-white/5' : 'bg-white/[0.03]';
+      return { color: defaultColor || 'text-white', bg: defaultBg || baseBg };
+    }
+
+    switch (techState) {
+      case 'offline': return { color: 'text-rose-500', bg: 'bg-rose-500/10 shadow-[0_0_20px_rgba(244,63,94,0.2)]' };
+      case 'syncing': return { color: 'text-amber-500', bg: 'bg-amber-500/10 shadow-[0_0_20px_rgba(245,158,11,0.2)]' };
+      case 'online': return { color: 'text-emerald-500', bg: 'bg-emerald-500/10 shadow-[0_0_20px_rgba(16,185,129,0.2)]' };
+      default: return { color: 'text-white', bg: 'bg-white/[0.03]' };
+    }
+  };
+
+  const { color: mainIconColor, bg: mainIconBg } = getDynamicColorClasses();
+
   return (
     <section
       ref={containerRef}
-      className={`py-20 lg:py-24 relative border-t border-white/5 
+      className={`py-20 lg:py-24 relative border-t border-white/5
         ${isMobileVariant ? 'bg-[#0B0A10]' : 'bg-transparent'}
       `}
     >
@@ -109,7 +139,7 @@ const FeatureSection: React.FC<FeatureProps> = ({
           {/* Text Content */}
           <div className="flex-1 relative">
             <div ref={iconRef} className="flex items-center gap-3 mb-8">
-              <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-lg backdrop-blur-md border border-white/10 transition-transform duration-500 hover:scale-110 ${isMobileVariant ? 'bg-white/5 shadow-[0_0_20px_rgba(255,255,255,0.05)]' : 'bg-white/[0.03]'}`}>
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-lg backdrop-blur-md border border-white/10 transition-all duration-500 hover:scale-110 ${mainIconBg} ${mainIconColor}`}>
                 <Icon size={22} strokeWidth={1.5} />
               </div>
               <span className="text-secondary font-mono text-xs uppercase tracking-widest font-semibold opacity-70">
@@ -125,8 +155,25 @@ const FeatureSection: React.FC<FeatureProps> = ({
               {description}
             </p>
 
-            <div ref={listRef} className="flex flex-col gap-5">
-              {features.map((item, idx) => (
+            {/* Content Rendering: Grid vs List */}
+            <div ref={listRef} className={detailedFeatures ? "grid grid-cols-1 sm:grid-cols-2 gap-4" : "flex flex-col gap-5"}>
+
+              {/* Detailed Grid Mode */}
+              {detailedFeatures && detailedFeatures.map((item, idx) => {
+                const { color, bg } = getDynamicColorClasses(item.iconColor, item.iconBgColor);
+                return (
+                  <div key={idx} className="p-5 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] hover:border-white/10 transition-colors group">
+                    <div className={`mb-3 p-2 w-fit rounded-lg ${bg} ${color} group-hover:text-white transition-colors duration-500`}>
+                      <item.icon size={20} />
+                    </div>
+                    <h4 className="text-white font-medium mb-1">{item.title}</h4>
+                    <p className="text-sm text-secondary leading-relaxed">{item.description}</p>
+                  </div>
+                );
+              })}
+
+              {/* standard List Mode */}
+              {!detailedFeatures && features.map((item, idx) => (
                 <div
                   key={idx}
                   className={`flex items-center gap-5 p-4 rounded-xl border transition-all duration-300 group cursor-default
@@ -149,7 +196,11 @@ const FeatureSection: React.FC<FeatureProps> = ({
           {/* Visual Content */}
           <div className="flex-1 w-full flex justify-center lg:justify-end relative">
             <div ref={visualRef} className="w-full h-[650px] relative z-10 flex items-center justify-center">
-              <AbstractArt variant={artVariant} className="w-full h-full" />
+              <AbstractArt
+                variant={artVariant}
+                className="w-full h-full"
+                onTechStateChange={artVariant === 'tech' ? setTechState : undefined}
+              />
             </div>
           </div>
 
